@@ -31,7 +31,7 @@ Both sources are chunked and combined into a single **FAISS** vector index.
 
 ## 4. Component Diagram
 
-```
+```mermaid
 graph TD
     A["User Question"] --> B["FastAPI + LangServe\n/agent endpoint"]
     B --> C["LangGraph StateGraph"]
