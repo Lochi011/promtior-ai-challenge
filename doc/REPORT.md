@@ -33,17 +33,17 @@ Both sources are chunked and combined into a single **FAISS** vector index.
 
 ```mermaid
 graph TD
-    %% --- SECCIÓN DE INGESTA ---
+    %% --- SECCIÓN DE DATOS (Izquierda) ---
     subgraph Ingestion["Offline Ingestion (ingester.py)"]
         direction LR
-        I["WebBaseLoader\nPromtior website"] --> K["RecursiveCharacterTextSplitter"]
-        J["PyPDFLoader\nAI Engineer.pdf"] --> K
-        K --> L["OpenAI Embeddings\ntext-embedding-3-small"]
-        L --> F[("FAISS\nVector Index")]
+        I["WebBaseLoader<br/>Promtior website"] --> K["RecursiveCharacter<br/>TextSplitter"]
+        J["PyPDFLoader<br/>AI Engineer.pdf"] --> K
+        K --> L["OpenAI Embeddings<br/>text-embedding-3-small"]
+        L --> F[("FAISS<br/>Vector Index")]
     end
 
-    %% --- FLUJO DE USUARIO ---
-    A["User Question"] --> B["FastAPI + LangServe\n/agent endpoint"]
+    %% --- FLUJO PRINCIPAL (Centro/Derecha) ---
+    A["User Question"] --> B["FastAPI + LangServe<br/>/agent endpoint"]
     B --> C["LangGraph StateGraph"]
 
     subgraph Flow["Agentic RAG Flow"]
@@ -51,9 +51,9 @@ graph TD
         D["retrieve_node"] --> E["generate_node"]
     end
 
-    %% --- INTERACCIONES ---
+    %% --- CONEXIONES LIMPIAS ---
     C --> D
     D <-->|Search & Retrieval| F
-    E <-->|Prompt & Response| G["ChatOpenAI\ngpt-4o-mini"]
+    E <-->|Inference| G["ChatOpenAI<br/>gpt-4o-mini"]
     E --> H["Answer returned to client"]
 ```
