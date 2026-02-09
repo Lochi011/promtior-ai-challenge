@@ -1,18 +1,24 @@
-# Orquestación y Agentes
+# Orchestration & Agents
 langchain
 langchain-openai
 langgraph
 langserve[all]
 
-# Procesamiento de Datos
+# Data Processing
 pypdf
 langchain-community
 tiktoken
 
-# Web y API
+# Vector Store
+faiss-cpu
+
+# Web Scraping
+beautifulsoup4
+
+# Web & API
 fastapi
 uvicorn
 python-dotenv
 
-# Herramientas de búsqueda 
+# Search Tools
 tavily-python
