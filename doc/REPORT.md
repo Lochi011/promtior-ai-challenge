@@ -55,4 +55,4 @@ graph TD
         K --> L["OpenAI Embeddings\ntext-embedding-3-small"]
         L --> F
     end
-    ```
+```
