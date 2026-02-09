@@ -31,7 +31,8 @@ Both sources are chunked and combined into a single **FAISS** vector index.
 
 ## 4. Component Diagram
 
-```graph TD
+```
+graph TD
     A["User Question"] --> B["FastAPI + LangServe\n/agent endpoint"]
     B --> C["LangGraph StateGraph"]
 
@@ -53,4 +54,5 @@ Both sources are chunked and combined into a single **FAISS** vector index.
         J["PyPDFLoader\nAI Engineer.pdf"] --> K
         K --> L["OpenAI Embeddings\ntext-embedding-3-small"]
         L --> F
-    end```
+    end
+    ```
