@@ -1,0 +1,18 @@
+# Orquestación y Agentes
+langchain
+langchain-openai
+langgraph
+langserve[all]
+
+# Procesamiento de Datos
+pypdf
+langchain-community
+tiktoken
+
+# Web y API
+fastapi
+uvicorn
+python-dotenv
+
+# Herramientas de búsqueda 
+tavily-python

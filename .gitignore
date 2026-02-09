@@ -1,0 +1,13 @@
+# Entorno Virtual
+.venv/
+venv/
+env/
+
+# Variables Sensibles (¡NUNCA SUBIR ESTO!)
+.env
+
+# Archivos de sistema y Python
+__pycache__/
+*.py[cod]
+.DS_Store
+.vs/
