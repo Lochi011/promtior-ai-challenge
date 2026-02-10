@@ -15,7 +15,7 @@ def test_promtior_identity() -> None:
     assert "2023" in answer, "Expected founding year 2023"
     assert "Emiliano" in answer, "Expected founder Emiliano Chinelli"
     assert "Ignacio" in answer, "Expected founder Ignacio Acuña"
-    print("✅ All identity assertions passed.")
+    print("All identity assertions passed.")
 
 
 def test_promtior_services() -> None:
@@ -28,9 +28,25 @@ def test_promtior_services() -> None:
     print(f"\nANSWER:\n{answer}\n")
 
     assert len(answer) > 20, "Expected a substantive answer about services"
-    print("✅ Services assertion passed.")
+    assert "don't have enough" not in answer.lower(), "Agent should NOT refuse"
+    print("Services assertion passed.")
+
+
+def test_promtior_case_studies() -> None:
+    """Verify the agent can describe Promtior's clients and case studies."""
+    result = agent_executor.invoke({
+        "question": "Tell me about Promtior's case studies and clients."
+    })
+
+    answer: str = result["answer"]
+    print(f"\nANSWER:\n{answer}\n")
+
+    assert len(answer) > 20, "Expected a substantive answer about clients"
+    assert "don't have enough" not in answer.lower(), "Agent should NOT refuse"
+    print("Case studies assertion passed.")
 
 
 if __name__ == "__main__":
     test_promtior_identity()
     test_promtior_services()
+    test_promtior_case_studies()

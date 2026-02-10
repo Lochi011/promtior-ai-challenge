@@ -1,4 +1,8 @@
-"""Centralized configuration, validation, and resource factories."""
+﻿"""Centralized configuration, validation, and resource factories.
+
+Design: Factory Pattern with @lru_cache singletons for LLM, Embeddings,
+and Retriever. Each resource is created once and reused across requests.
+"""
 
 import os
 import logging
@@ -28,12 +32,27 @@ class Config:
     PDF_PATH: str = "data/AI Engineer.pdf"
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
-    PROMTIOR_URLS: list[str] = [
-        "https://www.promtior.ai/",
-        "https://www.promtior.ai/service",
-        "https://www.promtior.ai/use-cases",
-        "https://www.promtior.ai/contact-us",
-        "https://www.promtior.ai/blog",
+
+    # Sitemap-based deep crawl
+    PAGES_SITEMAP: str = "https://www.promtior.ai/pages-sitemap.xml"
+    BLOG_SITEMAP: str = "https://www.promtior.ai/blog-posts-sitemap.xml"
+
+    # URLs to skip (no useful RAG content)
+    SKIP_URL_PATTERNS: list[str] = [
+        "politica-de-privacidad",
+        "privacy-policy",
+        "terms-of-service",
+        "contact-us",
+        "contacto",
+        "errorenelpago",
+        "graciasportucompra",
+        "webinar-registration",
+        "prelanzamiento",
+        "download-white-paper",
+        "meet-promtior",
+        "ebook-organizaciones",
+        "thank-you",
+        "404",
     ]
 
     @classmethod
@@ -50,20 +69,20 @@ Config.validate()
 
 @lru_cache(maxsize=1)
 def get_llm() -> ChatOpenAI:
-    """Create and cache a single ChatOpenAI instance."""
+    """Factory: create and cache a single ChatOpenAI instance."""
     logger.info("Initializing LLM: %s", Config.MODEL_NAME)
     return ChatOpenAI(model=Config.MODEL_NAME, temperature=0)
 
 
 @lru_cache(maxsize=1)
 def get_embeddings() -> OpenAIEmbeddings:
-    """Create and cache a single OpenAIEmbeddings instance."""
+    """Factory: create and cache a single OpenAIEmbeddings instance."""
     return OpenAIEmbeddings(model=Config.EMBEDDING_MODEL)
 
 
 @lru_cache(maxsize=1)
 def get_retriever() -> VectorStoreRetriever:
-    """Load the persisted FAISS index once and cache the retriever.
+    """Factory: load the persisted FAISS index once and cache the retriever.
 
     Raises:
         FileNotFoundError: If the FAISS index directory does not exist.

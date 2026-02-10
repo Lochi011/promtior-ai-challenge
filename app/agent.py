@@ -1,4 +1,10 @@
-﻿"""LangGraph workflow definition for the Promtior Bionic Agent."""
+﻿"""LangGraph workflow definition for the Promtior Bionic Agent.
+
+Graph:  START -> retrieve -> generate -> END
+
+Uses separate InputState / OutputState so LangServe only requires
+{"question": "..."} from the client and only returns {"answer": "..."}.
+"""
 
 from langgraph.graph import StateGraph, END
 from app.nodes import AgentState, InputState, OutputState, retrieve_node, generate_node
@@ -6,10 +12,7 @@ from app.config import logger
 
 
 def create_agent() -> StateGraph:
-    """Build and compile the two-step RAG agent graph.
-
-    Flow:  START → retrieve → generate → END
-    """
+    """Build and compile the two-step RAG agent graph."""
     logger.info("Building Promtior Bionic Agent graph")
     workflow = StateGraph(AgentState, input=InputState, output=OutputState)
 
@@ -25,5 +28,4 @@ def create_agent() -> StateGraph:
     return compiled
 
 
-# Singleton exported to server.py via LangServe
 agent_executor = create_agent()

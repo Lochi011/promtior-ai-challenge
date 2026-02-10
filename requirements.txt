@@ -7,13 +7,16 @@ langserve[all]
 # Data Processing
 pypdf
 langchain-community
+langchain-text-splitters
 tiktoken
 
 # Vector Store
 faiss-cpu
 
-# Web Scraping
+# Web Scraping & Sitemap Parsing
 beautifulsoup4
+lxml
+requests
 
 # Web & API
 fastapi

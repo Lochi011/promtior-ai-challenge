@@ -8,52 +8,62 @@ This solution implements a **Bionic RAG Agent** designed to represent Promtior's
 
 | Source | Loader | Purpose |
 |---|---|---|
-| `https://promtior.ai/` | `WebBaseLoader` | Live company information |
-| `data/AI Engineer.pdf` | `PyPDFLoader` | Supplementary technical context |
+| `pages-sitemap.xml` (16 URLs) | `requests` + `BeautifulSoup` | All main pages: home, services, use-cases, ebook, etc. |
+| `blog-posts-sitemap.xml` (10 URLs) | `requests` + `BeautifulSoup` | All blog posts: AI guides, case reflections, tech articles |
+| `data/AI Engineer.pdf` | `PyPDFLoader` | Challenge presentation (extra points) |
 
-Both sources are chunked and combined into a single **FAISS** vector index.
+All sources are parsed with a custom `_parse_page()` function that strips `<nav>`, `<footer>`, `<script>`, then chunked and combined into a single **FAISS** vector index.
+
+### Design Patterns
+
+* **Factory Pattern:** `@lru_cache` singletons in `config.py` for LLM, Embeddings, and Retriever -- created once, reused across all requests.
+* **Strategy Pattern:** `ingester.py` uses separate loader functions (`_load_sitemap`, `_load_pdf`) with a common `list[Document]` return type, making it easy to add new data sources.
 
 ## 2. Implementation Logic
 
-* **Orchestration:** Used **LangGraph** `StateGraph` to manage a typed state (`question → context → answer`) through discrete nodes, enabling future self-correction cycles.
-* **Grounding:** Implemented a **System Prompt Guardrail** containing verified facts (May 2023, Emiliano Chinelli, Ignacio Acuña) that the LLM must prefer over raw retrieved context.
-* **Vector Store:** Utilized **FAISS** (`faiss-cpu`) for high-performance similarity search with **OpenAI `text-embedding-3-small`** embeddings.
-* **API:** Exposed via **LangServe** on FastAPI, providing auto-generated docs at `/agent/playground`.
+* **Orchestration:** Used **LangGraph** `StateGraph` with typed state (`question → context → sources → answer`) and separate `InputState` / `OutputState` schemas for clean LangServe serialization.
+* **Grounding:** Implemented an **XML-tagged System Prompt** with `<verified_facts>` and `<instructions>` blocks. The prompt uses **Chain-of-Thought** (silent reasoning) and explicitly instructs the LLM to synthesize available information rather than refuse.
+* **Source Citation:** The `retrieve_node` tags each chunk with its `source_type` (website / presentation), enabling the `generate_node` to cite origins in answers.
+* **Content Cleaning:** A custom `_parse_page()` BeautifulSoup function decomposes `<nav>`, `<footer>`, `<script>` tags and extracts text from `<main>` or `<article>`, eliminating HTML noise at the source.
+* **Vector Store:** Utilized **FAISS** (`faiss-cpu`) for similarity search with **OpenAI `text-embedding-3-small`** embeddings and `k=5`.
+* **API:** Exposed via **LangServe** on FastAPI, providing a playground at `/agent/playground`.
 
 ## 3. Main Challenges & Solutions
 
 | Challenge | Solution |
 |---|---|
-| Initial retrieval missed the founders' names | Increased `k=5` and added a layered prompt that prioritizes verified facts |
-| Web content had noisy HTML | Used `RecursiveCharacterTextSplitter` with overlap to preserve paragraph context |
+| Initial retrieval missed the founders' names | Increased `k=5` and added verified facts in the system prompt as fallback |
+| Web content had noisy HTML (nav bars, footers) | Used `SitemapLoader` with a `parsing_function` that decomposes nav/footer/script tags via BeautifulSoup |
+| Single-URL scraping missed blog posts and subpages | Switched to sitemap-based deep crawl (`pages-sitemap.xml` + `blog-posts-sitemap.xml`) covering 26 URLs |
+| LLM answered "I don't have enough information" despite having context | Rewrote system prompt with XML tags and explicit instruction: "If ANY relevant info exists, YOU MUST answer" |
+| LangServe required all state fields in input | Split `AgentState` into `InputState` / `OutputState` for proper JSON schema generation |
+| `typing.TypedDict` incompatible with Pydantic on Python < 3.12 | Changed import to `typing_extensions.TypedDict` |
 | Railway deployment port conflicts | `CMD` reads `$PORT` env var with fallback to `8000` |
-| LangServe validation errors on input schema | Split `AgentState` into `InputState` / `OutputState` for proper JSON schema generation |
 
 ## 4. Component Diagram
 
 ```mermaid
 graph TD
-    %% --- SECCIÓN DE DATOS (Izquierda) ---
     subgraph Ingestion["Offline Ingestion (ingester.py)"]
         direction LR
-        I["WebBaseLoader<br/>Promtior website"] --> K["RecursiveCharacter<br/>TextSplitter"]
-        J["PyPDFLoader<br/>AI Engineer.pdf"] --> K
+        I["SitemapLoader<br/>pages-sitemap.xml"] --> P["_parse_page()<br/>BeautifulSoup"]
+        IB["SitemapLoader<br/>blog-posts-sitemap.xml"] --> P
+        J["PyPDFLoader<br/>AI Engineer.pdf"] --> P
+        P --> K["RecursiveCharacter<br/>TextSplitter"]
         K --> L["OpenAI Embeddings<br/>text-embedding-3-small"]
         L --> F[("FAISS<br/>Vector Index")]
     end
 
-    %% --- FLUJO PRINCIPAL (Centro/Derecha) ---
     A["User Question"] --> B["FastAPI + LangServe<br/>/agent endpoint"]
     B --> C["LangGraph StateGraph"]
 
     subgraph Flow["Agentic RAG Flow"]
         direction TB
-        D["retrieve_node"] --> E["generate_node"]
+        D["retrieve_node<br/>+ source metadata"] --> E["generate_node<br/>XML prompt + CoT"]
     end
 
-    %% --- CONEXIONES LIMPIAS ---
     C --> D
-    D <-->|Search & Retrieval| F
-    E <-->|Inference| G["ChatOpenAI<br/>gpt-4o-mini"]
-    E --> H["Answer returned to client"]
+    D <-->|"similarity search k=5"| F
+    E <-->|"inference"| G["ChatOpenAI<br/>gpt-4o-mini"]
+    E --> H["Grounded Answer<br/>with source citations"]
 ```
