@@ -9,7 +9,7 @@ This solution implements a **Bionic RAG Agent** designed to represent Promtior's
 | Source | Loader | Purpose |
 |---|---|---|
 | `pages-sitemap.xml` (16 URLs) | `requests` + `BeautifulSoup` | All main pages: home, services, use-cases, ebook, etc. |
-| `blog-posts-sitemap.xml` (10 URLs) | `requests` + `BeautifulSoup` | All blog posts: AI guides, case reflections, tech articles |
+| `blog-posts-sitemap.xml` (19 URLs) | `requests` + `BeautifulSoup` | All blog posts: AI guides, case reflections, tech articles |
 | `data/AI Engineer.pdf` | `PyPDFLoader` | Challenge presentation (extra points) |
 
 All sources are parsed with a custom `_parse_page()` function that strips `<nav>`, `<footer>`, `<script>`, then chunked and combined into a single **FAISS** vector index.
@@ -35,7 +35,7 @@ All sources are parsed with a custom `_parse_page()` function that strips `<nav>
 |---|---|
 | Initial retrieval missed the founders' names | Increased `k=5` and added verified facts in the system prompt as fallback |
 | Web content had noisy HTML (nav bars, footers) | Custom `_parse_page()` with BeautifulSoup decomposes nav/footer/script/iframe/svg tags |
-| Single-URL scraping missed blog posts and subpages | Switched to sitemap-based deep crawl (`pages-sitemap.xml` + `blog-posts-sitemap.xml`) covering 26 URLs |
+| Single-URL scraping missed blog posts and subpages | Switched to sitemap-based deep crawl (`pages-sitemap.xml` + `blog-posts-sitemap.xml`) covering 35 raw URLs (16 loaded after filtering) |
 | LLM answered "I don't have enough information" despite having context | Rewrote system prompt with XML tags and explicit instruction: "If ANY relevant info exists, YOU MUST answer" |
 | LangServe required all state fields in input | Split `AgentState` into `InputState` / `OutputState` for proper JSON schema generation |
 | `typing.TypedDict` incompatible with Pydantic on Python < 3.12 | Changed import to `typing_extensions.TypedDict` |
@@ -68,4 +68,3 @@ graph TD
     D <-->|"similarity search k=5"| F
     E <-->|"inference"| G["ChatOpenAI<br/>gpt-4o-mini"]
     E --> H["Grounded Answer<br/>with source citations"]
-```

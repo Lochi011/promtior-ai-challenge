@@ -3,7 +3,7 @@ An advanced Agentic RAG assistant developed for Promtior. This agent leverages a
 
 ## 🚀 Key Features
 ### Deep Website Ingestion: 
-Utilizes SitemapLoader to index the entire site (Blog, Use Cases, Services).
+Utilizes sitemap-based deep crawling with requests + BeautifulSoup to index the entire site (Blog, Use Cases, Services).
 
 ### Data Optimization: 
 Advanced filtering of binary assets (images/videos) and HTML noise to maximize context quality.
