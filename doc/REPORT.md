@@ -45,13 +45,13 @@ All sources are parsed with a custom `_parse_page()` function that strips `<nav>
 
 ## 4. Component Diagram
 
-```mermaid
+```mermaid  
 graph TD
     subgraph Ingestion["Offline Ingestion (ingester.py)"]
         direction LR
         SM["Sitemap XML<br/>requests + lxml"] --> FP["_parse_page()<br/>BeautifulSoup"]
-        PDF["PyPDFLoader<br/>AI Engineer.pdf"] --> FP
         FP --> SP["RecursiveCharacter<br/>TextSplitter"]
+        PDF["PyPDFLoader<br/>AI Engineer.pdf"] --> SP
         SP --> EB["_embed_in_batches()<br/>text-embedding-3-small"]
         EB --> F[("FAISS<br/>Vector Index")]
     end
