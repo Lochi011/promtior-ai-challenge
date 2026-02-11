@@ -61,7 +61,8 @@ Open the interactive chat at: http://localhost:8000/agent/playground
 
 ### 🐳 Docker Support
 ```bash 
-docker build -t promtior-bionic . docker run -p 8000:8000 --env-file .env promtior-bionic
+docker build -t promtior-bionic .
+docker run -p 8000:8000 --env-file .env promtior-bionic
 ```
 
 ### 🧪 Testing

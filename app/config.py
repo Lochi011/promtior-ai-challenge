@@ -24,7 +24,7 @@ logger = logging.getLogger("PromtiorAgent")
 class Config:
     """Single source of truth for all tuneable parameters."""
 
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "").strip()
     MODEL_NAME: str = "gpt-4o-mini"
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     INDEX_PATH: str = "faiss_index"
