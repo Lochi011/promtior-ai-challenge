@@ -14,6 +14,13 @@ Built with LangGraph to separate retrieval logic from answer generation.
 ### Production Stack: 
 Powered by FastAPI, LangServe, FAISS, and OpenAI (gpt-4o-mini).
 
+## 📂 Data Sources & Ingestion
+The agent is pre-loaded with high-quality context from:
+
+Official Website: Crawled to cover the latest blog posts and use cases.
+
+Corporate Data: The data/AI Engineer.pdf file is already included in this repository.
+
 ## 🛠 Quick Start
 ### 1. Clone & Enter
 ```bash 
@@ -39,20 +46,13 @@ Copy the example file and add your OPENAI_API_KEY:
 cp .env.example .env 
 ```
 
-### 5. Place the Source PDF
-Download or copy the `AI Engineer.pdf` presentation into the `data/` directory:
-```bash
-mkdir -p data
-# Place your AI Engineer.pdf file into the data/ folder
-```
-
-### 6. Build the Vector Index (Ingestion)
+### 5. Build the Vector Index (Ingestion)
 This script scrapes the Promtior website and processes the PDF data: 
 ```bash 
 python -m app.ingester 
 ```
 
-### 7. Run the Server
+### 6. Run the Server
 ```bash 
 python -m app.server 
 ```
