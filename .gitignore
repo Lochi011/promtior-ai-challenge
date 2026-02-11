@@ -3,7 +3,7 @@
 venv/
 env/
 
-# Variables Sensibles (¡NUNCA SUBIR ESTO!)
+# Variables Sensibles
 .env
 
 # Archivos de sistema y Python
@@ -12,4 +12,19 @@ __pycache__/
 .DS_Store
 .vs/
 
-faiss_index/
+# Railway
+railway.json
+
+# Archivos de registro
+*.log
+
+# Tests
+test-reports/
+coverage.xml
+*.cover
+
+# Editores
+.vscode/
+*~
+*.bak
+*.tmp

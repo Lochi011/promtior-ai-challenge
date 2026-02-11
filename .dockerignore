@@ -5,7 +5,6 @@ venv/
 .gitignore
 __pycache__/
 *.pyc
-faiss_index/
 .vs/
 *.md
 doc/
