@@ -9,6 +9,7 @@ pypdf
 langchain-community
 langchain-text-splitters
 tiktoken
+typing_extensions
 
 # Vector Store
 faiss-cpu
@@ -22,6 +23,3 @@ requests
 fastapi
 uvicorn
 python-dotenv
-
-# Search Tools
-tavily-python

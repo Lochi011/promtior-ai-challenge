@@ -1,0 +1,11 @@
+.venv/
+venv/
+.env
+.git/
+.gitignore
+__pycache__/
+*.pyc
+faiss_index/
+.vs/
+*.md
+doc/

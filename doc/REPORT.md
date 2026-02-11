@@ -21,10 +21,11 @@ All sources are parsed with a custom `_parse_page()` function that strips `<nav>
 
 ## 2. Implementation Logic
 
-* **Orchestration:** Used **LangGraph** `StateGraph` with typed state (`question → context → sources → answer`) and separate `InputState` / `OutputState` schemas for clean LangServe serialization.
+* **Orchestration:** Used **LangGraph** `StateGraph` with typed state (`question -> context -> sources -> answer`) and separate `InputState` / `OutputState` schemas for clean LangServe serialization.
 * **Grounding:** Implemented an **XML-tagged System Prompt** with `<verified_facts>` and `<instructions>` blocks. The prompt uses **Chain-of-Thought** (silent reasoning) and explicitly instructs the LLM to synthesize available information rather than refuse.
 * **Source Citation:** The `retrieve_node` tags each chunk with its `source_type` (website / presentation), enabling the `generate_node` to cite origins in answers.
 * **Content Cleaning:** A custom `_parse_page()` BeautifulSoup function decomposes `<nav>`, `<footer>`, `<script>` tags and extracts text from `<main>` or `<article>`, eliminating HTML noise at the source.
+* **Data Safeguards:** Static asset URLs (`.jpg`, `.png`, `.svg`, etc.) are rejected before fetching. Content-Type is validated as `text/html`. Pages with fewer than 200 characters of clean text are discarded. Embeddings are sent in batches to avoid OpenAI 429 rate limits.
 * **Vector Store:** Utilized **FAISS** (`faiss-cpu`) for similarity search with **OpenAI `text-embedding-3-small`** embeddings and `k=5`.
 * **API:** Exposed via **LangServe** on FastAPI, providing a playground at `/agent/playground`.
 
@@ -33,37 +34,29 @@ All sources are parsed with a custom `_parse_page()` function that strips `<nav>
 | Challenge | Solution |
 |---|---|
 | Initial retrieval missed the founders' names | Increased `k=5` and added verified facts in the system prompt as fallback |
-| Web content had noisy HTML (nav bars, footers) | Used `SitemapLoader` with a `parsing_function` that decomposes nav/footer/script tags via BeautifulSoup |
+| Web content had noisy HTML (nav bars, footers) | Custom `_parse_page()` with BeautifulSoup decomposes nav/footer/script/iframe/svg tags |
 | Single-URL scraping missed blog posts and subpages | Switched to sitemap-based deep crawl (`pages-sitemap.xml` + `blog-posts-sitemap.xml`) covering 26 URLs |
 | LLM answered "I don't have enough information" despite having context | Rewrote system prompt with XML tags and explicit instruction: "If ANY relevant info exists, YOU MUST answer" |
 | LangServe required all state fields in input | Split `AgentState` into `InputState` / `OutputState` for proper JSON schema generation |
 | `typing.TypedDict` incompatible with Pydantic on Python < 3.12 | Changed import to `typing_extensions.TypedDict` |
 | Railway deployment port conflicts | `CMD` reads `$PORT` env var with fallback to `8000` |
+| Static assets (.jpg, .png) polluting vector store | Added `_is_static_asset()` filter + Content-Type validation + 200-char minimum |
+| OpenAI 429 rate limits during embedding | Implemented `_embed_in_batches()` with 50-doc batches and 1s pause |
 
 ## 4. Component Diagram
 
 ```mermaid
-graph TD
-    subgraph Ingestion["Offline Ingestion (ingester.py)"]
-        direction LR
-        I["SitemapLoader<br/>pages-sitemap.xml"] --> P["_parse_page()<br/>BeautifulSoup"]
-        IB["SitemapLoader<br/>blog-posts-sitemap.xml"] --> P
-        J["PyPDFLoader<br/>AI Engineer.pdf"] --> P
-        P --> K["RecursiveCharacter<br/>TextSplitter"]
-        K --> L["OpenAI Embeddings<br/>text-embedding-3-small"]
-        L --> F[("FAISS<br/>Vector Index")]
-    end
+graph TD subgraph Ingestion["Offline Ingestion (ingester.py)"] direction LR SM["Sitemap XML<br/>requests + lxml"] --> FP["_parse_page()<br/>BeautifulSoup"] PDF["PyPDFLoader<br/>AI Engineer.pdf"] --> FP FP --> SP["RecursiveCharacter<br/>TextSplitter"] SP --> EB["_embed_in_batches()<br/>text-embedding-3-small"] EB --> F[("FAISS<br/>Vector Index")] end
+A["User Question"] --> B["FastAPI + LangServe<br/>/agent endpoint"]
+B --> C["LangGraph StateGraph"]
 
-    A["User Question"] --> B["FastAPI + LangServe<br/>/agent endpoint"]
-    B --> C["LangGraph StateGraph"]
+subgraph Flow["Agentic RAG Flow"]
+    direction TB
+    D["retrieve_node<br/>+ source metadata"] --> E["generate_node<br/>XML prompt + CoT"]
+end
 
-    subgraph Flow["Agentic RAG Flow"]
-        direction TB
-        D["retrieve_node<br/>+ source metadata"] --> E["generate_node<br/>XML prompt + CoT"]
-    end
-
-    C --> D
-    D <-->|"similarity search k=5"| F
-    E <-->|"inference"| G["ChatOpenAI<br/>gpt-4o-mini"]
-    E --> H["Grounded Answer<br/>with source citations"]
+C --> D
+D <-->|"similarity search k=5"| F
+E <-->|"inference"| G["ChatOpenAI<br/>gpt-4o-mini"]
+E --> H["Grounded Answer<br/>with source citations"]
 ```
