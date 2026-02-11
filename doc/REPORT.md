@@ -46,17 +46,26 @@ All sources are parsed with a custom `_parse_page()` function that strips `<nav>
 ## 4. Component Diagram
 
 ```mermaid
-graph TD subgraph Ingestion["Offline Ingestion (ingester.py)"] direction LR SM["Sitemap XML<br/>requests + lxml"] --> FP["_parse_page()<br/>BeautifulSoup"] PDF["PyPDFLoader<br/>AI Engineer.pdf"] --> FP FP --> SP["RecursiveCharacter<br/>TextSplitter"] SP --> EB["_embed_in_batches()<br/>text-embedding-3-small"] EB --> F[("FAISS<br/>Vector Index")] end
-A["User Question"] --> B["FastAPI + LangServe<br/>/agent endpoint"]
-B --> C["LangGraph StateGraph"]
+graph TD
+    subgraph Ingestion["Offline Ingestion (ingester.py)"]
+        direction LR
+        SM["Sitemap XML<br/>requests + lxml"] --> FP["_parse_page()<br/>BeautifulSoup"]
+        PDF["PyPDFLoader<br/>AI Engineer.pdf"] --> FP
+        FP --> SP["RecursiveCharacter<br/>TextSplitter"]
+        SP --> EB["_embed_in_batches()<br/>text-embedding-3-small"]
+        EB --> F[("FAISS<br/>Vector Index")]
+    end
 
-subgraph Flow["Agentic RAG Flow"]
-    direction TB
-    D["retrieve_node<br/>+ source metadata"] --> E["generate_node<br/>XML prompt + CoT"]
-end
+    A["User Question"] --> B["FastAPI + LangServe<br/>/agent endpoint"]
+    B --> C["LangGraph StateGraph"]
 
-C --> D
-D <-->|"similarity search k=5"| F
-E <-->|"inference"| G["ChatOpenAI<br/>gpt-4o-mini"]
-E --> H["Grounded Answer<br/>with source citations"]
+    subgraph Flow["Agentic RAG Flow"]
+        direction TB
+        D["retrieve_node<br/>+ source metadata"] --> E["generate_node<br/>XML prompt + CoT"]
+    end
+
+    C --> D
+    D <-->|"similarity search k=5"| F
+    E <-->|"inference"| G["ChatOpenAI<br/>gpt-4o-mini"]
+    E --> H["Grounded Answer<br/>with source citations"]
 ```
