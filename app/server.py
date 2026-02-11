@@ -1,5 +1,7 @@
 """FastAPI + LangServe entrypoint for the Promtior Bionic Agent."""
 
+import os
+
 from fastapi import FastAPI
 from langserve import add_routes
 from app.agent import agent_executor
@@ -22,4 +24,5 @@ async def health() -> dict[str, str]:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("app.server:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app.server:app", host="0.0.0.0", port=port, reload=True)

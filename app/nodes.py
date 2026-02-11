@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """LangGraph node definitions for the Promtior Bionic Agent.
 
 Each node is a pure function: (AgentState) -> partial state dict.
@@ -15,13 +15,13 @@ from app.config import get_llm, get_retriever, logger
 # ---------------------------------------------------------------------------
 
 class InputState(TypedDict):
-    """What the client sends — only the question."""
+    """What the client sends - only the question."""
 
     question: str
 
 
 class OutputState(TypedDict):
-    """What the client receives — only the answer."""
+    """What the client receives - only the answer."""
 
     answer: str
 
@@ -36,7 +36,7 @@ class AgentState(TypedDict):
 
 
 # ---------------------------------------------------------------------------
-# System prompt — XML-tagged, Chain-of-Thought, non-shy
+# System prompt - XML-tagged, Chain-of-Thought, non-shy
 # ---------------------------------------------------------------------------
 
 SYSTEM_PROMPT: str = """You are the Promtior Bionic Assistant.
@@ -60,7 +60,7 @@ and the AI Engineer presentation PDF, and a <question> from the user.
 2. FIRST, silently reason about what information is available in the context AND \
 in the verified facts above. Do NOT show your reasoning to the user.
 3. If ANY relevant information exists in either source, YOU MUST answer. \
-Synthesize and summarize — do NOT say "I don't have enough information" \
+Synthesize and summarize - do NOT say "I don't have enough information" \
 when there is relevant data available.
 4. When answering, briefly cite the source: (Source: Website) or (Source: Presentation).
 5. Only say you cannot answer if the question is completely unrelated to Promtior.
@@ -74,7 +74,7 @@ when there is relevant data available.
 
 def retrieve_node(state: AgentState) -> dict[str, str]:
     """Search the FAISS knowledge base and return context with source tags."""
-    logger.info("RETRIEVE node — query: %s", state["question"])
+    logger.info("RETRIEVE node - query: %s", state["question"])
     retriever = get_retriever()
     docs = retriever.invoke(state["question"])
 
@@ -90,13 +90,24 @@ def retrieve_node(state: AgentState) -> dict[str, str]:
 
     context = "\n\n---\n\n".join(tagged_chunks)
     sources = ", ".join(source_labels)
-    logger.info("RETRIEVE node — %d chunks from sources: %s", len(docs), sources)
+    logger.info("RETRIEVE node - %d chunks from sources: %s", len(docs), sources)
     return {"context": context, "sources": sources}
 
 
 def generate_node(state: AgentState) -> dict[str, str]:
     """Generate a grounded answer using XML-tagged context and CoT reasoning."""
-    logger.info("GENERATE node — building prompt")
+    logger.info("GENERATE node - building prompt")
+
+    if not state["context"].strip():
+        logger.warning("GENERATE node - empty context, returning fallback")
+        return {
+            "answer": (
+                "I couldn't find specific information about that in the Promtior "
+                "knowledge base. Please try rephrasing your question or ask "
+                "about Promtior's services, founders, or case studies."
+            )
+        }
+
     llm = get_llm()
 
     user_message = (
@@ -110,5 +121,5 @@ def generate_node(state: AgentState) -> dict[str, str]:
     ]
 
     response = llm.invoke(messages)
-    logger.info("GENERATE node — answer length: %d chars", len(response.content))
+    logger.info("GENERATE node - answer length: %d chars", len(response.content))
     return {"answer": response.content}

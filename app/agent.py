@@ -7,11 +7,12 @@ Uses separate InputState / OutputState so LangServe only requires
 """
 
 from langgraph.graph import StateGraph, END
+from langgraph.graph.state import CompiledStateGraph
 from app.nodes import AgentState, InputState, OutputState, retrieve_node, generate_node
 from app.config import logger
 
 
-def create_agent() -> StateGraph:
+def create_agent() -> CompiledStateGraph:
     """Build and compile the two-step RAG agent graph."""
     logger.info("Building Promtior Bionic Agent graph")
     workflow = StateGraph(AgentState, input=InputState, output=OutputState)

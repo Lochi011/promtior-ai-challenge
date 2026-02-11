@@ -1,4 +1,4 @@
-﻿"""Deep-crawl ingestion pipeline using Wix Sitemaps + PDF.
+"""Deep-crawl ingestion pipeline using Wix Sitemaps + PDF.
 
 Fetches sitemap XML, extracts URLs, then scrapes each page synchronously
 with requests + BeautifulSoup.  PyPDFLoader handles the presentation PDF.
@@ -106,8 +106,8 @@ def _extract_urls_from_sitemap(sitemap_url: str) -> list[str]:
     return [loc.text.strip() for loc in soup.find_all("loc")]
 
 
-def _fetch_page(url: str) -> str:
-    """Fetch a single page and return cleaned text.
+def _fetch_page(url: str) -> tuple[str, str]:
+    """Fetch a single page and return (cleaned_text, page_title).
 
     Validates Content-Type is text/html before parsing.
     """
@@ -116,15 +116,16 @@ def _fetch_page(url: str) -> str:
         resp.raise_for_status()
     except requests.RequestException:
         logger.warning("  Could not fetch: %s", url)
-        return ""
+        return "", ""
 
     content_type = resp.headers.get("Content-Type", "")
     if "text/html" not in content_type:
         logger.info("  Skipping (not HTML, got %s): %s", content_type, url)
-        return ""
+        return "", ""
 
     soup = BeautifulSoup(resp.text, "lxml")
-    return _parse_page(soup)
+    title = soup.title.string.strip() if soup.title and soup.title.string else ""
+    return _parse_page(soup), title
 
 
 def _load_sitemap(sitemap_url: str, source_type: str) -> list[Document]:
@@ -143,7 +144,7 @@ def _load_sitemap(sitemap_url: str, source_type: str) -> list[Document]:
             skipped_filter += 1
             continue
 
-        text = _fetch_page(url)
+        text, page_title = _fetch_page(url)
         if len(text) < _MIN_TEXT_LENGTH:
             logger.info("  SKIP (< %d chars): %s", _MIN_TEXT_LENGTH, url)
             skipped_empty += 1
@@ -154,7 +155,7 @@ def _load_sitemap(sitemap_url: str, source_type: str) -> list[Document]:
             metadata={
                 "source": url,
                 "source_type": source_type,
-                "title": url.split("/")[-1] or "home",
+                "title": page_title or url.split("/")[-1] or "home",
             },
         )
         cleaned.append(doc)

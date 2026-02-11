@@ -38,7 +38,7 @@ class Config:
     BLOG_SITEMAP: str = "https://www.promtior.ai/blog-posts-sitemap.xml"
 
     # URLs to skip (no useful RAG content)
-    SKIP_URL_PATTERNS: list[str] = [
+    SKIP_URL_PATTERNS: tuple[str, ...] = (
         "politica-de-privacidad",
         "privacy-policy",
         "terms-of-service",
@@ -53,7 +53,7 @@ class Config:
         "ebook-organizaciones",
         "thank-you",
         "404",
-    ]
+    )
 
     @classmethod
     def validate(cls) -> None:
@@ -64,12 +64,11 @@ class Config:
             )
 
 
-Config.validate()
-
 
 @lru_cache(maxsize=1)
 def get_llm() -> ChatOpenAI:
     """Factory: create and cache a single ChatOpenAI instance."""
+    Config.validate()
     logger.info("Initializing LLM: %s", Config.MODEL_NAME)
     return ChatOpenAI(model=Config.MODEL_NAME, temperature=0)
 
@@ -77,6 +76,7 @@ def get_llm() -> ChatOpenAI:
 @lru_cache(maxsize=1)
 def get_embeddings() -> OpenAIEmbeddings:
     """Factory: create and cache a single OpenAIEmbeddings instance."""
+    Config.validate()
     return OpenAIEmbeddings(model=Config.EMBEDDING_MODEL)
 
 

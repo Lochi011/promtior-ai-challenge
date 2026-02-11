@@ -17,17 +17,20 @@ Powered by FastAPI, LangServe, FAISS, and OpenAI (gpt-4o-mini).
 ## 🛠 Quick Start
 ### 1. Clone & Enter
 ```bash 
-1. git clone https://github.com/lochi011/promtior-ai-challenge.git cd promtior-ai-challenge 
+git clone https://github.com/lochi011/promtior-ai-challenge.git
+cd promtior-ai-challenge 
 ```
 
 ### 2. Create Virtual Environment
 ```powershell 
-1. python -m venv .venv .venv\Scripts\activate # Windows source .venv/bin/activate # Mac/Linux 
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+source .venv/bin/activate  # Mac/Linux 
 ```
 
 ### 3. Install Dependencies
 ```bash
-1. pip install -r requirements.txt 
+pip install -r requirements.txt 
 ```
 
 ### 4. Configure Environment
@@ -36,13 +39,20 @@ Copy the example file and add your OPENAI_API_KEY:
 cp .env.example .env 
 ```
 
-### 5. Build the Vector Index (Ingestion)
+### 5. Place the Source PDF
+Download or copy the `AI Engineer.pdf` presentation into the `data/` directory:
+```bash
+mkdir -p data
+# Place your AI Engineer.pdf file into the data/ folder
+```
+
+### 6. Build the Vector Index (Ingestion)
 This script scrapes the Promtior website and processes the PDF data: 
 ```bash 
 python -m app.ingester 
 ```
 
-### 6. Run the Server
+### 7. Run the Server
 ```bash 
 python -m app.server 
 ```

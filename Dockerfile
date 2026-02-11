@@ -19,6 +19,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Run as non-root user for security
+RUN useradd -m appuser
+USER appuser
+
 # Expose the FastAPI / LangServe port
 EXPOSE 8000
 
